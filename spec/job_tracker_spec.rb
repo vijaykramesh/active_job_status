@@ -42,6 +42,15 @@ describe ActiveJobStatus::JobTracker do
       tracker.completed
       expect(store.fetch(job_id)).to eq "completed"
     end
+
+    context 'with a batch job' do
+      let(:batch_id) { '12345'}
+      let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
+      it 'updates the batch tracking' do
+        expect(tracker).to receive(:remove_from_batch)
+        tracker.completed
+      end
+    end
   end
 
   describe "#deleted" do
@@ -49,5 +58,24 @@ describe ActiveJobStatus::JobTracker do
       tracker.deleted
       expect(store.fetch(job_id)).to eq nil
     end
+
+    context 'with a batch job' do
+      let(:batch_id) { '12345'}
+      let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
+      it 'updates the batch tracking' do
+        expect(tracker).to receive(:remove_from_batch)
+        tracker.deleted
+      end
+    end
+  end
+
+  describe '#remove_from_batch' do
+    let(:batch_id) { '12345'}
+      let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
+      it 'updates the batch tracking' do
+        expect(store).to receive(:decrement).with("remaining_jobs:#{batch_id}")
+        expect(store).to receive(:delete).with("batch_for:#{job_id}")
+        tracker.remove_from_batch
+      end
   end
 end
