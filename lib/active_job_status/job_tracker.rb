@@ -27,18 +27,20 @@ module ActiveJobStatus
     end
 
     def completed
+      previous_status = store.fetch(job_id)
       store.write(
         job_id,
         JobStatus::COMPLETED.to_s,
         expires_in: expiration || DEFAULT_EXPIRATION
 
       )
-      remove_from_batch if batch_id
+      remove_from_batch if batch_id && previous_status && previous_status != JobStatus::COMPLETED.to_s
     end
 
     def deleted
+      previous_status = store.fetch(job_id)
       store.delete(job_id)
-      remove_from_batch if batch_id
+      remove_from_batch if batch_id && previous_status && previous_status != JobStatus::COMPLETED.to_s
     end
 
     def remove_from_batch

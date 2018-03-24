@@ -46,8 +46,19 @@ describe ActiveJobStatus::JobTracker do
     context 'with a batch job' do
       let(:batch_id) { '12345'}
       let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
-      it 'updates the batch tracking' do
+      it 'updates the batch tracking if the job was not already completed' do
+        allow(store).to receive(:fetch) { "working" }
         expect(tracker).to receive(:remove_from_batch)
+        tracker.completed
+      end
+      it 'does not update the batch tracking if the job was already completed' do
+        allow(store).to receive(:fetch) { "completed" }
+        expect(tracker).to receive(:remove_from_batch).exactly(0).times
+        tracker.completed
+      end
+      it 'does not update the batch tracking if the job does not exist' do
+        allow(store).to receive(:fetch) { nil }
+        expect(tracker).to receive(:remove_from_batch).exactly(0).times
         tracker.completed
       end
     end
@@ -62,10 +73,22 @@ describe ActiveJobStatus::JobTracker do
     context 'with a batch job' do
       let(:batch_id) { '12345'}
       let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
-      it 'updates the batch tracking' do
+      it 'updates the batch tracking if the job was not already completed' do
+        allow(store).to receive(:fetch) { "working" }
         expect(tracker).to receive(:remove_from_batch)
         tracker.deleted
       end
+      it 'does not update the batch tracking if the job was already completed' do
+        allow(store).to receive(:fetch) { "completed" }
+        expect(tracker).to receive(:remove_from_batch).exactly(0).times
+        tracker.completed
+      end
+      it 'does not update the batch tracking if the job does not exist' do
+        allow(store).to receive(:fetch) { nil }
+        expect(tracker).to receive(:remove_from_batch).exactly(0).times
+        tracker.completed
+      end
+
     end
   end
 
