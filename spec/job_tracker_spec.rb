@@ -48,17 +48,20 @@ describe ActiveJobStatus::JobTracker do
       let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
       it 'updates the batch tracking if the job was not already completed' do
         allow(store).to receive(:fetch) { "working" }
-        expect(tracker).to receive(:remove_from_batch)
+        expect(store).to receive(:decrement).with(ActiveJobStatus::JobTracker.remaining_jobs_key(batch_id))
+        expect(store).to receive(:delete).with(ActiveJobStatus::JobTracker.batch_for_key(job_id))
         tracker.completed
       end
       it 'does not update the batch tracking if the job was already completed' do
         allow(store).to receive(:fetch) { "completed" }
-        expect(tracker).to receive(:remove_from_batch).exactly(0).times
+        expect(store).not_to receive(:decrement)
+        expect(store).not_to receive(:delete)
         tracker.completed
       end
       it 'does not update the batch tracking if the job does not exist' do
         allow(store).to receive(:fetch) { nil }
-        expect(tracker).to receive(:remove_from_batch).exactly(0).times
+        expect(store).not_to receive(:decrement)
+        expect(store).not_to receive(:delete)
         tracker.completed
       end
     end
@@ -75,30 +78,22 @@ describe ActiveJobStatus::JobTracker do
       let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
       it 'updates the batch tracking if the job was not already completed' do
         allow(store).to receive(:fetch) { "working" }
-        expect(tracker).to receive(:remove_from_batch)
+        expect(store).to receive(:decrement).with(ActiveJobStatus::JobTracker.remaining_jobs_key(batch_id))
+        expect(store).to receive(:delete).with(ActiveJobStatus::JobTracker.batch_for_key(job_id))
         tracker.deleted
       end
-      it 'does not update the batch tracking if the job was already completed' do
+      it 'does not update the batch tracking if the job was already completed, but does delete the batch_for_key' do
         allow(store).to receive(:fetch) { "completed" }
-        expect(tracker).to receive(:remove_from_batch).exactly(0).times
-        tracker.completed
+        expect(store).not_to receive(:decrement)
+        expect(store).to receive(:delete).with(ActiveJobStatus::JobTracker.batch_for_key(job_id))
+        tracker.deleted
       end
-      it 'does not update the batch tracking if the job does not exist' do
+      it 'does not update the batch tracking if the job does not exist, but does delete the batch_for_key' do
         allow(store).to receive(:fetch) { nil }
-        expect(tracker).to receive(:remove_from_batch).exactly(0).times
-        tracker.completed
+        expect(store).not_to receive(:decrement)
+        expect(store).to receive(:delete).with(ActiveJobStatus::JobTracker.batch_for_key(job_id))
+        tracker.deleted
       end
-
     end
-  end
-
-  describe '#remove_from_batch' do
-    let(:batch_id) { '12345'}
-      let(:tracker) { described_class.new(job_id: job_id, batch_id: batch_id) }
-      it 'updates the batch tracking' do
-        expect(store).to receive(:decrement).with("remaining_jobs:#{batch_id}")
-        expect(store).to receive(:delete).with("batch_for:#{job_id}")
-        tracker.remove_from_batch
-      end
   end
 end

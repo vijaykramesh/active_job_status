@@ -8,7 +8,7 @@ module ActiveJobStatus
       @batch_id = batch_id
       @job_ids = job_ids
 
-      @remaining_jobs_key = ["remaining_jobs", @batch_id].join(":")
+      @remaining_jobs_key = ActiveJobStatus::JobTracker.remaining_jobs_key(batch_id)
 
       # the store_data flag is used by the ::find method return a JobBatch
       # object without re-saving the data
