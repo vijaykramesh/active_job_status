@@ -29,7 +29,7 @@ module ActiveJobStatus
       ActiveJobStatus.store.write(@remaining_jobs_key, @job_ids.size, raw: true, expires_in: expire_in)
 
       @job_ids.each do |job_id|
-        ActiveJobStatus.store.write(["batch_for", job_id].join(":"), @batch_id, expires_in: expire_in)
+        ActiveJobStatus.store.write(ActiveJobStatus::JobTracker.batch_for_key(job_id), @batch_id, expires_in: expire_in)
       end
     end
 
