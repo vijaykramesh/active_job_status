@@ -13,7 +13,7 @@ module ActiveJobStatus
     private
 
     def job_tracker
-      batch_id = ActiveJobStatus.store.fetch(["batch_for", job_id].join(":"))
+      batch_id = ActiveJobStatus.store.fetch(ActiveJobStatus::JobTracker.batch_for_key(job_id))
       @job_tracker ||= ActiveJobStatus::JobTracker.new(job_id: job_id, batch_id: batch_id)
     end
   end
