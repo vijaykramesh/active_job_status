@@ -22,7 +22,7 @@ describe ActiveJobStatus::TrackableJob do
 
     describe 'before enqueue' do
       it 'starts to track the job with JobTracker' do
-        expect(ActiveJobStatus::JobTracker).to receive(:new).with(job_id: 'j0b-1d') { job_tracker }
+        expect(ActiveJobStatus::JobTracker).to receive(:new).with(job_id: 'j0b-1d', batch_id: nil) { job_tracker }
         expect(job_tracker).to receive(:enqueued)
         job.enqueue
       end
@@ -30,7 +30,7 @@ describe ActiveJobStatus::TrackableJob do
 
     describe 'before/after perform' do
       it 'updates the job status with JobTracker and then remove it' do
-        expect(ActiveJobStatus::JobTracker).to receive(:new).with(job_id: 'j0b-1d') { job_tracker }
+        expect(ActiveJobStatus::JobTracker).to receive(:new).with(job_id: 'j0b-1d', batch_id: nil) { job_tracker }
         expect(job_tracker).to receive(:performing)
         expect(job_tracker).to receive(:completed)
         job.perform_now
