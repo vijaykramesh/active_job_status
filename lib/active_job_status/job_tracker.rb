@@ -30,28 +30,27 @@ module ActiveJobStatus
         job_id,
         JobStatus::WORKING.to_s,
         expires_in: expiration || DEFAULT_EXPIRATION
-
       )
     end
 
     def completed
+      previous_status = store.fetch(job_id)
       store.write(
         job_id,
         JobStatus::COMPLETED.to_s,
         expires_in: expiration || DEFAULT_EXPIRATION
-
       )
-      maybe_remove_from_batch
+      maybe_remove_from_batch(previous_status)
     end
 
     def deleted
-      definitely_remove_from_batch
+      previous_status = store.fetch(job_id)
+      definitely_remove_from_batch(previous_status)
     end
 
     private
 
-    def maybe_remove_from_batch
-      previous_status = store.fetch(job_id)
+    def maybe_remove_from_batch(previous_status)
       if batch_id && previous_status && previous_status != JobStatus::COMPLETED.to_s
         store.decrement(self.class.remaining_jobs_key(batch_id))
         store.delete(self.class.batch_for_key(job_id))
@@ -63,8 +62,8 @@ module ActiveJobStatus
 
     # in the case of hard deleted jobs, we want to
     # ensure we clean up the batch key for that job
-    def definitely_remove_from_batch
-      store.delete(self.class.batch_for_key(job_id)) unless maybe_remove_from_batch
+    def definitely_remove_from_batch(previous_status)
+      store.delete(self.class.batch_for_key(job_id)) unless maybe_remove_from_batch(previous_status)
     end
 
     attr_reader :job_id, :batch_id, :store, :expiration
